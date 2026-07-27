@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地震速報監測警報器</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: #1a1a2e;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+        }
+        h1 {
+            color: #ff4757;
+            text-shadow: 0 0 10px rgba(255, 71, 87, 0.4);
+            margin-bottom: 5px;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: #162447;
+            border: 3px solid #1f4068;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
+            transition: background-color 0.2s;
+        }
+        /* 🚨 警報觸發時的瘋狂閃爍動畫效果 */
+        @keyframes flash {
+            0% { background-color: #e74c3c; }
+            50% { background-color: #162447; }
+            100% { background-color: #e74c3c; }
+        }
+        .alert-active {
+            animation: flash 0.4s infinite;
+            border-color: #ffea00 !important;
+        }
+        /* 螢幕大字顯示區 */
+        .status-screen {
+            background-color: #0f172a;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 20px;
+            font-weight: bold;
+            border: 1px solid #334155;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #alertTitle { color: #00adb5; font-size: 24px; margin-bottom: 5px; }
+        #alertBody { color: #e2e8f0; font-size: 16px; }
+        
+        /* 按鈕樣式 */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            color: white;
+            transition: 0.1s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+        }
+        button:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+        .btn-trigger { background-color: #e74c3c; font-size: 18px; }
+        .btn-trigger:hover { background-color: #ff6b6b; }
+        .btn-stop { background-color: #7f8c8d; }
+        .btn-stop:hover { background-color: #95a5a6; }
+        
+        .level-group {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .btn-level { background-color: #2f3542; font-size: 14px; padding: 8px 12px; flex: 1; }
+        .btn-level.active { background-color: #e67e22; border: 1px solid #fff; }
+    </style>
+</head>
+<body>
+
+    <h1>🚨 地震速報自動警報監測模擬器</h1>
+    <p style="color: #aaa; margin-top: 0; font-size: 14px;">（HTML 安全相容版：點擊即可啟動國家級警報音效）</p>
+
+    <div class="container" id="mainBox">
+        <!-- 顯示幕 -->
+        <div class="status-screen">
+            <div id="alertTitle">🟢 系統監測中</div>
+            <div id="alertBody">目前觀測各地震度均未達發布標準。</div>
+        </div>
+
+        <!-- 選擇模擬震度 -->
+        <div style="text-align: left; font-size: 14px; color: #a29bfe;">設定模擬震度：</div>
+        <div class="level-group">
+            <button class="btn-level" id="lv3">3 級</button>
+            <button class="btn-level" id="lv5">5 弱</button>
+            <button class="btn-level active" id="lv6">6 強</button>
+        </div>
+
+        <!-- 核心功能按鈕 -->
+        <div class="btn-group">
+            <button class="btn-trigger" id="btnStart">📢 發布國家級警報 (測速演練)</button>
+            <button class="btn-stop" id="btnStop">📴 關閉警報 / 解除隔離</button>
+        </div>
+    </div>
+
+    <script>
+        var mainBox = document.getElementById('mainBox');
+        var alertTitle = document.getElementById('alertTitle');
+        var alertBody = document.getElementById('alertBody');
+        
+        var btnStart = document.getElementById('btnStart');
+        var btnStop = document.getElementById('btnStop');
+        
+        var lv3 = document.getElementById('lv3');
+        var lv5 = document.getElementById('lv5');
+        var lv6 = document.getElementById('lv6');
+
+        var currentLevel = "6強";
+        var isAlerting = false;
+        
+        // --- 🔊 模擬真實國家級警報雙頻音效 (Web Audio API) ---
+        var audioCtx = null;
+        var osc1 = null;
+        var osc2 = null;
+        var alertInterval = null;
+
+        function startAlertSound() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // 國家級警報是由兩個頻率（853Hz 和 960Hz）同時響起組成的獨特聲音
+                osc1 = audioCtx.createOscillator();
+                osc2 = audioCtx.createOscillator();
+                var gainNode = audioCtx.createGain();
+
+                osc1.type = 'sine';
+                osc1.frequency.value = 853; // 頻率一
+                
+                osc2.type = 'sine';
+                osc2.frequency.value = 960; // 頻率二
+
+                osc1.connect(gainNode);
+                osc2.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+                osc1.start();
+                osc2.start();
+
+                // 模擬間歇性的「嗶—— 嗶—— 嗶——」斷續聲 (每 0.5 秒切換一次音量)
+                var soundOn = true;
+                alertInterval = setInterval(function() {
+                    if (soundOn) {
+                        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                        soundOn = false;
+                    } else {
+                        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                        soundOn = true;
+                    }
+                }, 500);
+
+            } catch (e) { console.log("音效發聲失敗：", e); }
+        }
+
+        function stopAlertSound() {
+            if (alertInterval) { clearInterval(alertInterval); alertInterval = null; }
+            if (osc1) { try { osc1.stop(); } catch(e){} osc1 = null; }
+            if (osc2) { try { osc2.stop(); } catch(e){} osc2 = null; }
+        }
+
+        // --- 核心邏輯：發布警報 ---
+        function triggerAlert() {
+            if (isAlerting) return;
+            isAlerting = true;
+
+            // 觸發音訊系統
+            if (!audioCtx) try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+
+            // 網頁外框開始變紅閃爍
+            mainBox.classList.add('alert-active');
+            
+            // 根據設定的震度，顯示對應的速報內文
+            alertTitle.innerText = "🚨【地震速報】🚨";
+            alertTitle.style.color = "#ff4757";
+            
+            if (currentLevel === "3級") {
+                alertBody.innerHTML = "預估震度達 3 級。<br>［防護宣導］：室內請注意頭頂懸掛物，保持冷靜。";
+            } else if (currentLevel === "5弱") {
+                alertBody.innerHTML = "預估震度達 5 弱，高樓層搖晃劇烈！<br>［防護宣導］：請即刻就近進行【趴下、掩護、穩住】！";
+            } else {
+                alertBody.innerHTML = "預估震度達 6 強！全台有感劇烈搖晃！<br>［防護宣導］：請遠離玻璃窗與大型家具，迅速尋找堅固桌底保護頭部！";
+            }
+
+            // 開啟音效
+            startAlertSound();
+        }
+
+        // --- 核心邏輯：關閉警報 ---
+        function dismissAlert() {
+            isAlerting = false;
+            mainBox.classList.remove('alert-active');
+            alertTitle.innerText = "🟢 系統監測中";
+            alertTitle.style.color = "#00adb5";
+            alertBody.innerText = "目前觀測各地震度均未達發布標準。";
+            
+            stopAlertSound();
+        }
+
+        // --- 震度切換按鈕點擊 ---
+        function selectLevel(level, btn) {
+            currentLevel = level;
+            lv3.classList.remove('active');
+            lv5.classList.remove('active');
+            lv6.classList.remove('active');
+            btn.classList.add('active');
+            if (isAlerting) {
+                // 如果正在叫，切換等級時直接更新內文
+                isAlerting = false;
+                triggerAlert();
+            }
+        }
+
+        // 🛠️ 強制綁定點擊事件，預防瀏覽器封鎖
+        btnStart.addEventListener('click', triggerAlert);
+        btnStop.addEventListener('click', dismissAlert);
+        
+        lv3.addEventListener('click', function() { selectLevel("3級", lv3); });
+        lv5.addEventListener('click', function() { selectLevel("5弱", lv5); });
+        lv6.addEventListener('click', function() { selectLevel("6強", lv6); });
+    </script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數位電子造聲器 - 強制喚醒版</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", Arial, sans-serif; background-color: #111424; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; user-select: none; }
+        h1 { color: #00adb5; text-shadow: 0 0 10px rgba(0, 173, 181, 0.4); margin-bottom: 5px; }
+        .container { width: 100%; max-width: 550px; background-color: #1a1e36; border: 3px solid #1f4068; border-radius: 15px; padding: 25px; box-shadow: 0px 10px 30px rgba(0,0,0,0.5); }
+        .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .box { background-color: #0b0d1a; border: 1px solid #334155; border-radius: 8px; padding: 15px; text-align: center; }
+        .box-title { font-size: 15px; font-weight: bold; color: #4eedf4; margin-bottom: 10px; border-bottom: 1px dashed #2c3e50; padding-bottom: 5px; }
+        button { width: 100%; padding: 10px; margin: 5px 0; font-size: 14px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; color: white; transition: 0.1s; box-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+        button:active { transform: translateY(2px); box-shadow: none; }
+        .btn-blue { background-color: #2980b9; }
+        .btn-green { background-color: #2ecc71; }
+        .btn-purple { background-color: #8e44ad; }
+        .btn-red { background-color: #e74c3c; }
+        .btn-stop { background-color: #7f8c8d; font-size: 16px; padding: 12px; margin-top: 15px; }
+        .slider-group { text-align: left; margin: 10px 0; }
+        label { font-size: 13px; color: #a4b0be; }
+        input[type="range"] { width: 100%; margin-top: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>🎛️ 數位電子合成造聲器</h1>
+    <p style="color: #aaa; margin-top: 0; font-size: 14px;">（防鎖定升級版：按鈕會強制喚醒聲音引擎）</p>
+
+    <div class="container">
+        <div style="background:#0f172a; padding:10px; border-radius:6px; text-align:center; font-weight:bold; color:#ffea00;" id="statusMsg">
+            📢 提示：點擊任何按鈕時，瀏覽器會自動解鎖發聲權限！
+        </div>
+
+        <div class="panel-grid">
+            <div class="box">
+                <div class="box-title">🌊 環境療癒噪音</div>
+                <button class="btn-blue" id="btnWhite">--> 播放 白噪音</button>
+                <button class="btn-purple" id="btnPink">🍃 播放 粉紅噪音</button>
+                <button class="btn-green" id="btnBrown">🌊 播放 棕色噪音</button>
+            </div>
+            <div class="box">
+                <div class="box-title">👾 復古電玩音效</div>
+                <button class="btn-red" id="btnLaser">⚡ 雷射槍射擊</button>
+                <button class="btn-orange" id="btnCoin" style="background:#f39c12;">🪙 吃到金幣聲</button>
+                <button class="btn-cyan" id="btnSiren" style="background:#16a085;">🚀 飛船警報器</button>
+            </div>
+        </div>
+
+        <div class="box" style="margin-top:15px;">
+            <div class="box-title">🎚️ 綜合調音台</div>
+            <div class="slider-group">
+                <label>🔊 主音量控制：<span id="volText">50%</span></label>
+                <input type="range" id="volumeSlider" min="0" max="100" value="50">
+            </div>
+            <div class="slider-group">
+                <label>🎵 基礎音頻高度 (Hz)：<span id="hzText">440 Hz</span></label>
+                <input type="range" id="hzSlider" min="100" max="1500" value="440">
+            </div>
+        </div>
+
+        <button class="btn-stop" id="btnStop">⏹️ 關閉所有聲音 / 強制靜音</button>
+    </div>
+
+    <script>
+        var statusMsg = document.getElementById('statusMsg');
+        var volumeSlider = document.getElementById('volumeSlider');
+        var volText = document.getElementById('volText');
+        var hzSlider = document.getElementById('hzSlider');
+        var hzText = document.getElementById('hzText');
+
+        var audioCtx = null;
+        var mainGainNode = null;
+        var noiseNode = null;
+
+        // 🧠 強制解鎖並初始化發聲引擎
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                mainGainNode = audioCtx.createGain();
+                mainGainNode.connect(audioCtx.destination);
+            }
+            // 🌟 關鍵修正：如果音訊被瀏覽器凍結了，強制在點擊時將它「解凍喚醒」！
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            updateVolume();
+        }
+
+        function updateVolume() {
+            if (mainGainNode) {
+                var volPercent = volumeSlider.value;
+                volText.innerText = volPercent + "%";
+                mainGainNode.gain.setValueAtTime(volPercent / 200, audioCtx.currentTime);
+            }
+        }
+
+        volumeSlider.addEventListener('input', updateVolume);
+        hzSlider.addEventListener('input', function() { hzText.innerText = hzSlider.value + " Hz"; });
+
+        function stopAll() {
+            if (noiseNode) { try { noiseNode.stop(); } catch(e){} noiseNode = null; }
+            statusMsg.innerText = "💤 目前靜音中。點擊按鈕製造聲音！";
+            statusMsg.style.color = "#ffea00";
+        }
+        document.getElementById('btnStop').addEventListener('click', stopAll);
+
+        function playNoise(type) {
+            initAudio(); // 每次點擊都確認喚醒
+            stopAll();
+            statusMsg.innerText = "🔊 正在播放：" + type;
+            statusMsg.style.color = "#2ecc71";
+
+            var bufferSize = 2 * audioCtx.sampleRate;
+            var noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            var output = noiseBuffer.getChannelData(0);
+            var lastOut = 0.0;
+
+            for (var i = 0; i < bufferSize; i++) {
+                var white = Math.random() * 2 - 1;
+                if (type === "白噪音") {
+                    output[i] = white;
+                } else if (type === "棕色噪音") {
+                    output[i] = (lastOut + (0.02 * white)) / 1.02;
+                    lastOut = output[i];
+                    output[i] *= 3.5;
+                } else {
+                    output[i] = (white + lastOut) / 2;
+                    lastOut = white;
+                    output[i] *= 2;
+                }
+            }
+
+            noiseNode = audioCtx.createBufferSource();
+            noiseNode.buffer = noiseBuffer;
+            noiseNode.loop = true;
+            noiseNode.connect(mainGainNode);
+            noiseNode.start();
+        }
+
+        function playEffect(effectName) {
+            initAudio(); // 每次點擊都確認喚醒
+            stopAll();
+            statusMsg.innerText = "⚡ 觸發音效：" + effectName;
+            statusMsg.style.color = "#4eedf4";
+
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(mainGainNode);
+
+            var now = audioCtx.currentTime;
+            var baseHz = parseInt(hzSlider.value);
+
+            if (effectName === "雷射槍") {
+                osc.type = "sawtooth";
+                osc.frequency.setValueAtTime(baseHz * 2, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } 
+            else if (effectName === "金幣") {
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(baseHz, now);
+                osc.frequency.setValueAtTime(baseHz * 1.5, now + 0.08);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            } 
+            else if (effectName === "飛船警報") {
+                osc.type = "triangle";
+                osc.frequency.setValueAtTime(baseHz, now);
+                for(var i = 0; i < 10; i++) {
+                    osc.frequency.linearRampToValueAtTime(baseHz * 1.3, now + (i * 0.1) + 0.05);
+                    osc.frequency.linearRampToValueAtTime(baseHz * 0.7, now + (i * 0.1) + 0.1);
+                }
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+                osc.start(now); osc.stop(now + 1.0);
+            }
+        }
+
+        document.getElementById('btnWhite').addEventListener('click', function() { playNoise("白噪音"); });
+        document.getElementById('btnPink').addEventListener('click', function() { playNoise("粉紅噪音"); });
+        document.getElementById('btnBrown').addEventListener('click', function() { playNoise("棕色噪音"); });
+        document.getElementById('btnLaser').addEventListener('click', function() { playEffect("雷射槍"); });
+        document.getElementById('btnCoin').addEventListener('click', function() { playEffect("金幣"); });
+        document.getElementById('btnSiren').addEventListener('click', function() { playEffect("飛船警報"); });
+    </script>
+</body>
+</html>

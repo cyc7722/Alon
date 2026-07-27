@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的網頁版小恐龍跑酷遊戲</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+            user-select: none;
+        }
+        h1 {
+            color: #535353;
+            margin-bottom: 5px;
+        }
+        .ui-panel {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .key {
+            background: #e0e0e0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            color: #333;
+        }
+        /* 遊戲畫布邊框 */
+        #gameCanvas {
+            background-color: #ffffff;
+            border: 2px solid #535353;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🦖 網頁版迷你小恐龍大冒險 🌵</h1>
+    <div class="ui-panel">
+        👉 <b>操作說明：</b> 按下鍵盤的 <span class="key">Space 空白鍵</span> 可以控制小恐龍跳躍！躲避前方所有的仙人掌！
+    </div>
+
+    <!-- 遊戲核心畫布 -->
+    <canvas id="gameCanvas" width="700" height="250"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 1. 遊戲核心變數設定
+        let gameState = 'playing'; // 'playing' 或 'gameover'
+        let score = 0;
+        let highScore = localStorage.getItem('dinoHighScore') ? parseInt(localStorage.getItem('dinoHighScore')) : 0;
+
+        // 小恐龍角色資料
+        let dino = {
+            x: 50,
+            y: 190, // 地面上的 Y 座標
+            width: 30,
+            height: 40,
+            vy: 0,
+            gravity: 0.6,
+            jumpForce: 12,
+            isGrounded: true
+        };
+
+        // 仙人掌障礙物陣列
+        let cacti = [];
+        let spawnTimer = 0;
+        let gameSpeed = 5;
+
+        // 2. 監聽鍵盤空白鍵
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault(); // 防止網頁因為按空白鍵往下滾動
+                
+                if (gameState === 'playing' && dino.isGrounded) {
+                    dino.vy = -dino.jumpForce;
+                    dino.isGrounded = false;
+                } else if (gameState === 'gameover') {
+                    // 如果輸了，再按一次空白鍵可以立刻重來
+                    resetGame();
+                }
+            }
+        });
+
+        // 3. 遊戲重置功能
+        function resetGame() {
+            gameState = 'playing';
+            score = 0;
+            gameSpeed = 5;
+            cacti = [];
+            dino.y = 190;
+            dino.vy = 0;
+            dino.isGrounded = true;
+            spawnTimer = 0;
+        }
+
+        // 4. 物理引擎與碰撞偵測
+        function updatePhysics() {
+            // 小恐龍重力邏輯
+            dino.vy += dino.gravity;
+            dino.y += dino.vy;
+
+            // 落地偵測
+            if (dino.y >= 190) {
+                dino.y = 190;
+                dino.vy = 0;
+                dino.isGrounded = true;
+            }
+
+            // 分數隨著奔跑緩慢增加
+            score++;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('dinoHighScore', highScore);
+            }
+
+            // 隨時間稍微加快遊戲速度，增加挑戰難度
+            if (score % 500 === 0) {
+                gameSpeed += 0.5;
+            }
+
+            // 隨機生成仙人掌
+            spawnTimer++;
+            if (spawnTimer > Math.random() * 50 + 70) { // 控制出現的間隔
+                let cactusHeight = Math.floor(Math.random() * 25) + 25; // 隨機高度 25 ~ 50
+                cacti.push({
+                    x: canvas.width,
+                    y: 230 - cactusHeight, // 讓仙人掌底部貼齊地面
+                    width: 15,
+                    height: cactusHeight
+                });
+                spawnTimer = 0;
+            }
+
+            // 更新所有仙人掌的位置並檢查碰撞
+            for (let i = cacti.length - 1; i >= 0; i--) {
+                cacti[i].x -= gameSpeed;
+
+                // 超出左邊螢幕的仙人掌自動刪除
+                if (cacti[i].x + cacti[i].width < 0) {
+                    cacti.splice(i, 1);
+                    continue;
+                }
+
+                // 📐 精準方塊碰撞偵測演算法 (小恐龍跟仙人掌是否重疊)
+                if (dino.x < cacti[i].x + cacti[i].width &&
+                    dino.x + dino.width > cacti[i].x &&
+                    dino.y < cacti[i].y + cacti[i].height &&
+                    dino.y + dino.height > cacti[i].y) {
+                    
+                    // 撞到了！遊戲結束
+                    gameState = 'gameover';
+                }
+            }
+        }
+
+        // 5. 畫面繪製引擎 (純程式碼手工繪製圖形，斷網安全)
+        function draw() {
+            // A. 清空畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // B. 畫一條精緻的灰色地平線
+            ctx.strokeStyle = '#535353';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 230);
+            ctx.lineTo(canvas.width, 230);
+            ctx.stroke();
+
+            // C. 畫小恐龍 (用簡單幾何組裝出恐龍的感覺)
+            ctx.fillStyle = '#535353';
+            ctx.fillRect(dino.x, dino.y, dino.width, dino.height); // 身體
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(dino.x + 20, dino.y + 5, 4, 4); // 眼睛
+
+            // D. 畫所有在場上的仙人掌
+            ctx.fillStyle = '#2ecc71'; // 經典仙人掌綠色
+            cacti.forEach(c => {
+                ctx.fillRect(c.x, c.y, c.width, c.height); // 主幹
+                // 畫左右兩側分支小刺 (看起來更像仙人掌)
+                ctx.fillRect(c.x - 4, c.y + c.height*0.3, 4, 6);
+                ctx.fillRect(c.x + c.width, c.y + c.height*0.4, 4, 6);
+            });
+
+            // E. 顯示右上角計分板
+            ctx.fillStyle = '#666';
+            ctx.font = 'bold 16px Courier New';
+            ctx.textAlign = 'right';
+            ctx.fillText(`HI ${highScore.toString().padStart(5, '0')}  ${score.toString().padStart(5, '0')}`, canvas.width - 20, 30);
+
+            // F. 畫 GAME OVER 畫面
+            if (gameState === 'gameover') {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 30px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('🎮 GAME OVER 🎮', canvas.width / 2, canvas.height / 2 - 10);
+                
+                ctx.font = '16px sans-serif';
+                ctx.fillStyle = '#ffea00';
+                ctx.fillText('按下【 空白鍵 】立刻滿血復活重來', canvas.width / 2, canvas.height / 2 + 25);
+            }
+        }
+
+        // 6. 遊戲主循環運作系統 (每秒刷60次畫面)
+        function gameLoop() {
+            if (gameState === 'playing') {
+                updatePhysics();
+            }
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 啟動遊戲
+        gameLoop();
+    </script>
+</body>
+</html>
