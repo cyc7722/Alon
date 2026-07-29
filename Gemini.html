@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的語音 Gemini AI</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: #131314;
+            color: #e3e3e3;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 90vh;
+        }
+        h1 {
+            color: #fff;
+            font-size: 28px;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #1a73e8, #74b9ff, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 70%;
+            background-color: #1e1e20;
+            border-radius: 16px;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .user-msg {
+            background-color: #303134;
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-msg {
+            background-color: #1a73e8;
+            color: #fff;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background-color: #131314;
+            border-top: 1px solid #444;
+            gap: 8px;
+        }
+        input {
+            flex: 1;
+            background-color: #303134;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 12px 15px;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        button {
+            border: none;
+            padding: 0 18px;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #sendBtn {
+            background-color: #74b9ff;
+            color: #131314;
+        }
+        #sendBtn:hover {
+            background-color: #1a73e8;
+            color: #fff;
+        }
+        /* 🎙️ 麥克風專用樣式 */
+        #voiceBtn {
+            background-color: #303134;
+            color: #ffea00;
+            border: 1px solid #555;
+        }
+        #voiceBtn.recording {
+            background-color: #e74c3c;
+            color: #fff;
+            border-color: #e74c3c;
+            animation: pulse 1.2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>✨ 語音智慧版 Gemini AI</h1>
+    <div class="subtitle">（HTML 終極進化：點擊麥克風即可用語音聊天輸入）</div>
+
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox">
+            <div class="message ai-msg">👋 哈囉！我是你的語音版 Gemini AI。現在你可以直接點擊下面的【🎙️ 語音】按鈕對我講話，試著對我說「講個笑話」吧！</div>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="輸入訊息或點語音按鈕...">
+            <!-- 新增語音聽寫按鈕 -->
+            <button id="voiceBtn">🎙️ 語音</button>
+            <button id="sendBtn">傳送</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const voiceBtn = document.getElementById('voiceBtn');
+
+        // --- 核心功能：傳送訊息與 AI 回應 ---
+        function sendMessage() {
+            var text = userInput.value.trim();
+            if (text === "") return;
+
+            var userDiv = document.createElement('div');
+            userDiv.className = 'message user-msg';
+            userDiv.innerText = text;
+            chatBox.appendChild(userDiv);
+            
+            userInput.value = ""; 
+            chatBox.scrollTop = chatBox.scrollHeight; 
+
+            setTimeout(function() {
+                var aiReply = getAiResponse(text);
+                var aiDiv = document.createElement('div');
+                aiDiv.className = 'message ai-msg';
+                aiDiv.innerText = aiReply;
+                chatBox.appendChild(aiDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 600);
+        }
+
+        function getAiResponse(input) {
+            if (input.indexOf("笑話") !== -1) {
+                return "🤣 講個笑話：有一天，小明對巧克力說：『欸！你長得好像我喔。』巧克力回答：『因為你沒洗澡。』";
+            }
+            if (input.indexOf("你是誰") !== -1 || input.indexOf("名字") !== -1) {
+                return "🤖 我是你在 HTML 網頁裡做出來的語音 Gemini AI 機器人！";
+            }
+            if (input.indexOf("做什麼") !== -1 || input.indexOf("功能") !== -1) {
+                return "🛠️ 我可以陪你打字或語音聊天、講笑話、查時間，我是你的貼心小跟班！";
+            }
+            if (input.indexOf("你好") !== -1 || input.indexOf("嗨") !== -1 || input.indexOf("hello") !== -1) {
+                return "✨ 你好呀！聽到你的聲音或訊息真高興，今天過得開心嗎？";
+            }
+            if (input.indexOf("時間") !== -1 || input.indexOf("幾點") !== -1) {
+                var d = new Date();
+                return "⏱️ 現在的時間是 " + d.getHours() + " 點 " + d.getMinutes() + " 分喔！";
+            }
+            return "💡 我聽到了：『" + input + "』！你用語音打字非常成功喔！你可以再試著問我其他問題。";
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') sendMessage(); });
+
+
+        // --- 🎙️ 核心語音辨識系統 (Web Speech API) ---
+        // 檢查瀏覽器有沒有支援語音功能 (Chrome、Edge 皆完美支援)
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            voiceBtn.innerText = "❌ 未支援";
+            voiceBtn.disabled = true;
+            console.log("這台電腦的瀏覽器不支援語音辨識功能。");
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'zh-TW'; // 設定語音辨識為台灣國語中文字
+            recognition.interimResults = false; // 等講完才輸出，比較精準
+            recognition.maxAlternatives = 1;
+
+            // 點擊語音按鈕
+            voiceBtn.addEventListener('click', function() {
+                try {
+                    recognition.start(); // 啟動麥克風
+                } catch(e) {
+                    recognition.stop(); // 如果原本在錄音，再點一次就停止
+                }
+            });
+
+            // 當麥克風開始收到聲音
+            recognition.onstart = function() {
+                voiceBtn.innerText = "🔴 錄音中...";
+                voiceBtn.classList.add('recording');
+                userInput.placeholder = "請對著麥克風講話...";
+            };
+
+            // 當錄音結束
+            recognition.onend = function() {
+                voiceBtn.innerText = "🎙️ 語音";
+                voiceBtn.classList.remove('recording');
+                userInput.placeholder = "輸入訊息...";
+            };
+
+            // 🌟 語音成功辨識出文字的瞬間
+            recognition.onresult = function(event) {
+                const voiceText = event.results[0][0].transcript; // 抓取講話的中文文字
+                userInput.value = voiceText; // 把字自動填進框框
+                
+                // 貼心功能：填進去之後自動點擊傳送！
+                setTimeout(sendMessage, 300);
+            };
+
+            // 發生錯誤 (例如沒插麥克風或拒絕權限)
+            recognition.onerror = function(event) {
+                console.log("語音辨識出錯: " + event.error);
+                alert("麥克風啟動失敗！第一次使用時，請記得點擊瀏覽器頂部的『允許』使用麥克風權限喔！");
+            };
+        }
+    </script>
+</body>
+</html>

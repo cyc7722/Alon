@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>網頁版迷你 Roblox Obby 闖關</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", Arial, sans-serif; background-color: #1a1a2e; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; user-select: none; }
+        h1 { color: #ff4757; text-shadow: 0 0 10px rgba(255, 71, 87, 0.4); margin-bottom: 5px; }
+        .ui-panel { background-color: #162447; border: 2px solid #1f4068; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center; max-width: 760px; font-size: 14px; }
+        .key { background: #333; padding: 2px 6px; border-radius: 4px; border: 1px solid #555; color: #ffea00; font-weight: bold; }
+        .skin-select { margin-top: 10px; display: flex; gap: 10px; justify-content: center; }
+        .skin-btn { background-color: #00b894; color: white; border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .skin-btn.active { background-color: #ff4757; box-shadow: 0 0 8px #ff4757; }
+        #gameCanvas { background: linear-gradient(to bottom, #74b9ff 0%, #a29bfe 100%); border: 4px solid #2d3436; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+
+    <h1>🟥 網頁版迷你 Roblox：經典 Obby 🏃‍♂️</h1>
+    <div class="ui-panel">
+        按鍵盤 <span class="key">A</span> 向左、<span class="key">D</span> 向右、<span class="key">Space 空白鍵</span> 跳躍！衝向最右邊的<b>金色傳送門</b>！
+        <div class="skin-select">
+            <button class="skin-btn active" id="skin1">經典方塊人 (Noob)</button>
+            <button class="skin-btn" id="skin2">傳奇培根頭 (Bacon Hair)</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let currentSkin = 'noob';
+        let player = { x: 50, y: 200, width: 24, height: 32, vx: 0, vy: 0, speed: 4, jumpForce: 11, isGrounded: false };
+        let keys = { a: false, d: false };
+        let blocks = [];
+        let goal = { x: 730, y: 120, width: 40, height: 60 };
+
+        function initMap() {
+            blocks = []; player.x = 50; player.y = 200; player.vx = 0; player.vy = 0;
+            for(let i=0; i<4; i++) blocks.push({x: i*40, y: 320});
+            blocks.push({x: 240, y: 280});
+            blocks.push({x: 360, y: 240});
+            blocks.push({x: 480, y: 200});
+            for(let i=15; i<20; i++) blocks.push({x: i*40, y: 180});
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyA') keys.a = true;
+            if (e.code === 'KeyD') keys.d = true;
+            if (e.code === 'Space' && player.isGrounded) { player.vy = -player.jumpForce; player.isGrounded = false; }
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'KeyA') keys.a = false;
+            if (e.code === 'KeyD') keys.d = false;
+        });
+
+        document.getElementById('skin1').addEventListener('click', () => { currentSkin = 'noob'; document.getElementById('skin1').className = 'skin-btn active'; document.getElementById('skin2').className = 'skin-btn'; });
+        document.getElementById('skin2').addEventListener('click', () => { currentSkin = 'bacon'; document.getElementById('skin2').className = 'skin-btn active'; document.getElementById('skin1').className = 'skin-btn'; });
+
+        function update() {
+            player.vx = 0;
+            if (keys.a) player.vx = -player.speed;
+            if (keys.d) player.vx = player.speed;
+            player.x += player.vx;
+            if (player.x < 0) player.x = 0;
+            if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+
+            player.vy += 0.5; player.y += player.vy;
+            if (player.y > canvas.height) { initMap(); return; }
+
+            player.isGrounded = false;
+            blocks.forEach(b => {
+                if (player.x < b.x + 40 && player.x + player.width > b.x && player.y < b.y + 40 && player.y + player.height > b.y) {
+                    if (player.vy > 0 && player.y + player.height - player.vy <= b.y + 4) { player.y = b.y - player.height; player.vy = 0; player.isGrounded = true; }
+                }
+            });
+
+            if (player.x < goal.x + goal.width && player.x + player.width > goal.x && player.y < goal.y + goal.height && player.y + player.height > goal.y) {
+                alert("🎉 恭喜通過網頁版 Roblox Obby 障礙挑戰！"); initMap();
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            blocks.forEach(b => { ctx.fillStyle = '#7579e7'; ctx.fillRect(b.x, b.y, 40, 40); ctx.strokeStyle = '#9ab3f5'; ctx.strokeRect(b.x+2, b.y+2, 36, 36); });
+            ctx.fillStyle = '#ffea00'; ctx.fillRect(goal.x, goal.y, goal.width, goal.height);
+            if (currentSkin === 'noob') {
+                ctx.fillStyle = '#ffea00'; ctx.fillRect(player.x + 4, player.y, 16, 10);
+                ctx.fillStyle = '#00adb5'; ctx.fillRect(player.x, player.y + 10, player.width, 12);
+                ctx.fillStyle = '#00b894'; ctx.fillRect(player.x + 2, player.y + 22, 20, 10);
+            } else {
+                ctx.fillStyle = '#fdcb6e'; ctx.fillRect(player.x + 4, player.y + 4, 16, 8);
+                ctx.fillStyle = '#6c5ce7'; ctx.fillRect(player.x + 2, player.y, 20, 5);
+                ctx.fillStyle = '#ff4757'; ctx.fillRect(player.x, player.y + 12, player.width, 12);
+                ctx.fillStyle = '#2f3542'; ctx.fillRect(player.x + 3, player.y + 24, 18, 8);
+            }
+        }
+
+        function loop() { update(); draw(); requestAnimationFrame(loop); }
+        initMap(); loop();
+    </script>
+</body>
+</html>

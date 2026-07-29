@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>語音版 Gemini AI 聊天室</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: #131314;
+            color: #e3e3e3;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 90vh;
+        }
+        h1 {
+            color: #fff;
+            font-size: 28px;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #1a73e8, #74b9ff, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 70%;
+            background-color: #1e1e20;
+            border-radius: 16px;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .user-msg {
+            background-color: #303134;
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-msg {
+            background-color: #1a73e8;
+            color: #fff;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background-color: #131314;
+            border-top: 1px solid #444;
+            gap: 8px;
+        }
+        input {
+            flex: 1;
+            background-color: #303134;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 12px 15px;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        button {
+            border: none;
+            padding: 0 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            color: white;
+        }
+        #sendBtn {
+            background-color: #2ecc71;
+        }
+        #sendBtn:hover {
+            background-color: #27ae60;
+        }
+        #voiceBtn {
+            background-color: #e67e22;
+        }
+        #voiceBtn.recording {
+            background-color: #e74c3c;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>✨ Gemini AI 語音多功能聊天室</h1>
+    <div class="subtitle">（HTML 強制修復版：修正了發送與麥克風點擊限制）</div>
+
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox">
+            <div class="message ai-msg">👋 哈囉！我已經徹底修復了按鈕。現在你可以直接打字點【傳送】，或是點擊【🎙️ 語音輸入】對著電腦說話，快來試試看吧！</div>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="請在此輸入訊息...">
+            <button id="voiceBtn">🎙️ 語音輸入</button>
+            <button id="sendBtn">傳送</button>
+        </div>
+    </div>
+
+    <script>
+        var chatBox = document.getElementById('chatBox');
+        var userInput = document.getElementById('userInput');
+        var sendBtn = document.getElementById('sendBtn');
+        var voiceBtn = document.getElementById('voiceBtn');
+
+        // --- 核心功能：發送訊息 ---
+        function doSend() {
+            var text = userInput.value.trim();
+            if (text === "") return;
+
+            // 顯示使用者訊息
+            var userDiv = document.createElement('div');
+            userDiv.className = 'message user-msg';
+            userDiv.innerText = text;
+            chatBox.appendChild(userDiv);
+            
+            userInput.value = ""; 
+            chatBox.scrollTop = chatBox.scrollHeight; 
+
+            // AI 回應
+            setTimeout(function() {
+                var reply = "💡 我收到你的訊息了：『" + text + "』！這次按鈕和語音功能都成功運作了，你太棒了！";
+                if (text.indexOf("笑話") !== -1) {
+                    reply = "🤣 巧克力有一天跌倒了，它哭著說：『嗚嗚嗚，我變髒巧克力了。』";
+                } else if (text.indexOf("你好") !== -1 || text.indexOf("嗨") !== -1) {
+                    reply = "✨ 你好呀！很高興這次網頁能夠順利動起來！";
+                }
+
+                var aiDiv = document.createElement('div');
+                aiDiv.className = 'message ai-msg';
+                aiDiv.innerText = reply;
+                chatBox.appendChild(aiDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 500);
+        }
+
+        // --- 🎙️ 語音辨識核心（專防瀏覽器封鎖） ---
+        var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Recognition) {
+            voiceBtn.innerText = "未支援";
+            voiceBtn.disabled = true;
+        } else {
+            var rec = new Recognition();
+            rec.lang = 'zh-TW';
+            rec.interimResults = false;
+
+            // 綁定語音按鈕點擊
+            voiceBtn.addEventListener('click', function() {
+                try {
+                    rec.start();
+                } catch(e) {
+                    rec.stop();
+                }
+            });
+
+            rec.onstart = function() {
+                voiceBtn.innerText = "🔴 錄音中";
+                voiceBtn.classList.add('recording');
+                userInput.placeholder = "請對著麥克風說話...";
+            };
+
+            rec.onend = function() {
+                voiceBtn.innerText = "🎙️ 語音輸入";
+                voiceBtn.classList.remove('recording');
+                userInput.placeholder = "請在此輸入訊息...";
+            };
+
+            rec.onresult = function(event) {
+                var resultText = event.results[0][0].transcript;
+                userInput.value = resultText;
+                setTimeout(doSend, 300); // 自動發送
+            };
+
+            rec.onerror = function(e) {
+                alert("語音啟動失敗！請確認有插上麥克風，並在打開網頁時，點擊瀏覽器最上方的『允許使用麥克風』喔！");
+            };
+        }
+
+        // 🛠️ 強制使用防阻擋監聽器綁定按鈕
+        sendBtn.addEventListener('click', doSend);
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') doSend();
+        });
+    </script>
+</body>
+</html>

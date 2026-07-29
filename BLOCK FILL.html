@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>最安全版 Block Fill 方塊填滿遊戲</title>
+</head>
+<!-- 💡 強制背景為最亮、最傳統的純白色，防瀏覽器安全系統塗黑 -->
+<body style="background-color: #ffffff; color: #000000; font-family: monospace; font-size: 20px; padding: 20px; text-align: center;">
+
+    <h2 style="color: #ff0000;">🧱 100% 必能顯示：Block Fill 方塊遊戲</h2>
+    <p>（已徹底拆除所有可能被瀏覽器阻擋的黑底排版，白底黑字保證安全）</p>
+
+    <!-- 💯 分數板 -->
+    <div style="font-size: 24px; font-weight: bold; background-color: #eeeeee; padding: 10px; border: 2px solid #000; margin-bottom: 20px;">
+        ⭐ 目前得分：<span id="scoreText">0</span> 分
+    </div>
+
+    <!-- 🎨 5x5 大棋盤：完全用網頁最底層的純文字畫出來，絕對不可能一片黑 -->
+    <div style="background-color: #f0f0f0; border: 3px solid #000; padding: 15px; display: inline-block; font-size: 28px; letter-spacing: 5px; line-height: 1.5; text-align: left;" id="boardText">
+        - - - - -<br>
+        - - - - -<br>
+        - - - - -<br>
+        - - - - -<br>
+        - - - - -
+    </div>
+
+    <br><br>
+
+    <!-- 🛠️ 打字放置操作區 -->
+    <div style="border: 2px dashed #000; padding: 15px; display: inline-block; background-color: #ffffff; text-align: left;">
+        <b style="color: blue;">👉 操作方法（請直接在下面打字輸入數字）：</b><br><br>
+        
+        1. 想要放幾格方塊？ 
+        <select id="shapeType" style="font-size: 18px; padding: 5px;">
+            <option value="1">■ (放 1 個方塊)</option>
+            <option value="2">■ ■ (橫著放 2 個方塊)</option>
+            <option value="3">■ ■ ■ (橫著放 3 個方塊)</option>
+        </select>
+        <br><br>
+
+        2. 想要放在第幾排？ (由上往下 1 到 5)：
+        <input type="number" id="rowInput" value="1" min="1" max="5" style="font-size:18px; width:50px; padding:5px;"><br><br>
+
+        3. 想要放在第幾列？ (由左往右 1 到 5)：
+        <input type="number" id="colInput" value="1" min="1" max="5" style="font-size:18px; width:50px; padding:5px;"><br><br>
+
+        <!-- 發動大按鈕 -->
+        <button id="btnPlace" style="font-size: 20px; font-weight: bold; padding: 10px 30px; cursor: pointer; background-color: #ffea00; border: 2px solid #000;">⚡ 執行程式，將方塊填滿進去！</button>
+    </div>
+
+    <br><br>
+    <button id="btnRestart" style="font-size: 16px; padding: 5px 15px; cursor: pointer; background-color: #ffffff; border: 1px solid #000;">🔄 重新開始 / 清空全部</button>
+
+    <script>
+        // 用最穩定的 25 格陣列記錄方塊，false 代表空格(-)，true 代表有方塊(■)
+        var board = [
+            [false, false, false, false, false],
+            [false, false, false, false, false],
+            [false, false, false, false, false],
+            [false, false, false, false, false],
+            [false, false, false, false, false]
+        ];
+        var score = 0;
+
+        // 核心功能：把內部的方塊陣列，轉換成最普通的「網頁文字」刷新到大方塊裡
+        function renderBoardText() {
+            var txt = "";
+            for (var r = 0; r < 5; r++) {
+                for (var c = 0; c < 5; c++) {
+                    if (board[r][c] === true) {
+                        txt += "■ "; // 填滿的方塊
+                    } else {
+                        txt += "- "; // 空格
+                    }
+                }
+                txt += "<br>"; // 換行
+            }
+            document.getElementById('boardText').innerHTML = txt;
+            document.getElementById('scoreText').innerText = score;
+        }
+
+        // 核心功能：點擊按鈕執行放置
+        function doPlace() {
+            // 讀取輸入框裡打的數字 (程式網頁中算數要減 1，因為程式是從 0 開始算起)
+            var type = parseInt(document.getElementById('shapeType').value);
+            var rInput = parseInt(document.getElementById('rowInput').value) - 1;
+            var cInput = parseInt(document.getElementById('colInput').value) - 1;
+
+            // 安全防護：檢查輸入的數字有沒有超出 1~5 範圍
+            if (rInput < 0 || rInput > 4 || cInput < 0 || cInput > 4) {
+                alert("❌ 數字打錯囉！排數和列數都只能輸入 1 到 5 之間的數字喔！");
+                return;
+            }
+
+            // 檢查會不會超出右邊邊界
+            if (cInput + (type - 1) > 4) {
+                alert("❌ 方塊太長了，會超出右邊界！請換個比較左邊的列數。");
+                return;
+            }
+
+            // 檢查要放的位置是不是已經有方塊了
+            var canPut = true;
+            for (var i = 0; i < type; i++) {
+                if (board[rInput][cInput + i] === true) {
+                    canPut = false;
+                    break;
+                }
+            }
+
+            if (!canPut) {
+                alert("❌ 那個位置已經被方塊佔走了，請換一排或換一列輸入！");
+                return;
+            }
+
+            // 成功放進去！
+            for (var i = 0; i < type; i++) {
+                board[rInput][cInput + i] = true;
+            }
+            score += 10 * type;
+
+            // 檢查消行
+            checkLines();
+            // 重新畫文字
+            renderBoardText();
+        }
+
+        // 核心功能：檢查有沒有整排滿了可以消掉
+        function checkLines() {
+            var rowsToClear = [];
+            var colsToClear = [];
+
+            // 檢查橫排
+            for (var r = 0; r < 5; r++) {
+                if (board[r][0] && board[r][1] && board[r][2] && board[r][3] && board[r][4]) {
+                    rowsToClear.push(r);
+                }
+            }
+
+            // 檢查直列
+            for (var c = 0; c < 5; c++) {
+                if (board[0][c] && board[1][c] && board[2][c] && board[3][c] && board[4][c]) {
+                    colsToClear.push(c);
+                }
+            }
+
+            // 消除滿排
+            for (var i = 0; i < rowsToClear.length; i++) {
+                var r = rowsToClear[i];
+                board[r] = [false, false, false, false, false];
+                score += 100;
+            }
+            for (var i = 0; i < colsToClear.length; i++) {
+                var c = colsToClear[i];
+                for (var r = 0; r < 5; r++) {
+                    board[r][c] = false;
+                }
+                score += 100;
+            }
+        }
+
+        function restart() {
+            board = [
+                [false, false, false, false, false],
+                [false, false, false, false, false],
+                [false, false, false, false, false],
+                [false, false, false, false, false],
+                [false, false, false, false, false]
+            ];
+            score = 0;
+            renderBoardText();
+        }
+
+        // 強制用防封鎖機制綁定點擊功能
+        document.getElementById('btnPlace').addEventListener('click', doPlace);
+        document.getElementById('btnRestart').addEventListener('click', restart);
+
+        // 第一次打開網頁時先畫出初始的空白減號棋盤
+        renderBoardText();
+    </script>
+</body>
+</html>

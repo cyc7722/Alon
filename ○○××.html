@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手動無無阻擋：○× 棋盤</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: #111424;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #4eedf4;
+            text-shadow: 0 0 10px rgba(78, 237, 244, 0.4);
+            margin-bottom: 25px;
+        }
+        /* 3x3 棋盤主框架 */
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 420px;
+        }
+        /* 格子盒子 */
+        .cell-box {
+            background-color: #1a1e36;
+            border: 2px solid #34495e;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        /* 顯示符號的大字區 */
+        .display-sign {
+            font-size: 40px;
+            font-weight: bold;
+            height: 55px;
+            line-height: 55px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+        /* 按鈕小組 */
+        .sub-btn-group {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+        }
+        /* 下棋按鈕 */
+        .click-btn {
+            flex: 1;
+            padding: 6px 0;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+        .btn-o { background-color: #0056b3; color: #4eedf4; }
+        .btn-x { background-color: #bd2130; color: #ff4757; }
+        
+        /* 動態變色樣式 */
+        .color-o { color: #4eedf4 !important; text-shadow: 0 0 8px #4eedf4; }
+        .color-x { color: #ff4757 !important; text-shadow: 0 0 8px #ff4757; }
+
+        /* 重來大按鈕 */
+        .restart-btn {
+            width: 100%;
+            max-width: 420px;
+            padding: 12px;
+            font-size: 18px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            box-shadow: 0 4px 0 #1e7e34;
+        }
+        .restart-btn:active { transform: translateY(3px); box-shadow: none; }
+    </style>
+</head>
+<body>
+
+    <h1>⚔️ ○× 棋盤 (手動自選絕對成功版) ⚔️</h1>
+    <p style="color:#aaa; font-size:14px; margin-top:-15px;">（免大腦自動切換！想下什麼自己點，保證絕對能下出 ✕ 喔！）</p>
+
+    <!-- 3x3 大棋盤 -->
+    <div class="board-grid">
+        <!-- 第 1 格 -->
+        <div class="cell-box">
+            <div class="display-sign" id="s0">-</div>
+            <div class="sub-btn-group">
+                <button class="click-btn btn-o" id="o0">下○</button>
+                <button class="click-btn btn-x" id="x0">下×</button>
+            </div>
+        </div>
+        <!-- 第 2 格 -->
+        <div class="cell-box">
+            <div class="display-sign" id="s1">-</div>
+            <div class="sub-btn-group">
+                <button class="click-btn btn-o" id="o1">下○</button>
+                <button class="click-btn btn-x" id="x1">下×</button>
+            </div>
+        </div>
+        <!-- 第 3 格 -->
+        <div class="cell-box">
+            <div class="display-sign" id="s2">-</div>
+            <div class="sub-btn-group">
+                <button class="click-btn btn-o" id="o2">下○</button>
+                <button class="click-btn btn-x" id="x2">下×</button>
+            </div>
+        </div>
+        <!-- 第 4 格 -->
+        <div class="cell-box">
+            <div class="display-sign" id="s3">-</div>
+            <div class="sub-btn-group">
+                <button class="click-btn btn-o" id="o3">下○</button>
+                <button class="click-btn btn-x" id="x3">下×</button>
+            </div>
+        </div>
+        <!-- 第 5 格 -->
+        <div class="cell-box">
+            <div class="display-sign" id="s4">-</div>
+            <div class="sub-btn-group">
+                <button class="click-btn btn-o" id="o4">下○</button>
+                <button class="click-btn btn-x" id="x4">下×</button>
+            </div>
+        </div>
+        <!-- 第 6 格 -->
+        <div class="cell-box">
+            <div class="display-sign" id="s5">-</div>
+            <div class="sub-btn-group">
+                <button class="click-btn btn-o" id="o5">下○</button>
+                <button class="click-btn btn-x" id="x5">下×</button>
+            </div>
+        </div>
+        <!-- 第 7 格 -->
+        <div class="cell-box">
+            <div class="display-sign" id="s6">-</div>
+            <div class="sub-btn-group">
+                <button class="click-btn btn-o" id="o6">下○</button>
+                <button class="click-btn btn-x" id="x6">下×</button>
+            </div>
+        </div>
+        <!-- 第 8 格 -->
+        <div class="cell-box">
+            <div class="display-sign" id="s7">-</div>
+            <div class="sub-btn-group">
+                <button class="click-btn btn-o" id="o7">下○</button>
+                <button class="click-btn btn-x" id="x7">下×</button>
+            </div>
+        </div>
+        <!-- 第 9 格 -->
+        <div class="cell-box">
+            <div class="display-sign" id="s8">-</div>
+            <div class="sub-btn-group">
+                <button class="click-btn btn-o" id="o8">下○</button>
+                <button class="click-btn btn-x" id="x8">下×</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重新開局按鈕 -->
+    <button class="restart-btn" id="megaReset">🔄 清空全部格子重玩</button>
+
+    <script>
+        // 核心手工下棋控制 (強制綁定，保證點哪顆就變出哪個符號)
+        function setSign(id, type) {
+            var screen = document.getElementById('s' + id);
+            if (type === 'O') {
+                screen.innerText = "○";
+                screen.className = "display-sign color-o";
+            } else {
+                screen.innerText = "×";
+                screen.className = "display-sign color-x";
+            }
+        }
+
+        // 清空
+        function wipeAll() {
+            for (let i = 0; i < 9; i++) {
+                var screen = document.getElementById('s' + i);
+                screen.innerText = "-";
+                screen.className = "display-sign";
+            }
+        }
+
+        // 一格一格強制寫死點擊事件，不給瀏覽器任何罷工或誤判的機會！
+        for (let i = 0; i < 9; i++) {
+            (function(index) {
+                document.getElementById('o' + index).addEventListener('click', function() { setSign(index, 'O'); });
+                document.getElementById('x' + index).addEventListener('click', function() { setSign(index, 'X'); });
+            })(i);
+        }
+
+        document.getElementById('megaReset').addEventListener('click', wipeAll);
+    </script>
+</body>
+</html>
